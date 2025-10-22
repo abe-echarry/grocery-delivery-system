@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Grocery Delivery App</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
+    h1 { margin-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; overflow: hidden; background: #fff; }
+    .card img { width: 100%; height: 160px; object-fit: cover; display: block; }
+    .card .body { padding: 12px; }
+    .name { font-weight: 600; margin: 0 0 6px; }
+    .meta { color: #444; font-size: 14px; margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <h1>🍎 Grocery Delivery App</h1>
+  <p>Browse items below.</p>
+
+  <div class="grid">
+    {% for p in products %}
+      <div class="card">
+        {% if p.image_url %}
+          <img src="{{ p.image_url }}" alt="{{ p.name }}">
+        {% else %}
+          <!-- fallback placeholder -->
+          <img src="https://via.placeholder.com/640x420?text={{ p.name|urlencode }}" alt="{{ p.name }}">
+        {% endif %}
+        <div class="body">
+          <p class="name">{{ p.name }}</p>
+          <p class="meta">${{ p.price }} · Stock: {{ p.stock }}</p>
+          <p class="meta">Category: {{ p.category.name }}</p>
+        </div>
+      </div>
+    {% empty %}
+      <p>No products yet — add some in the admin.</p>
+    {% endfor %}
+  </div>
+</body>
+</html>
+

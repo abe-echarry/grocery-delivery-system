@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Order placed</title></head>
+<body>
+  <h2>🎉 Thank you! Your order #{{ order.id }} was placed.</h2>
+  <p>Total: ${{ order.total }}</p>
+  <h3>Items</h3>
+  <ul>
+    {% for it in order.items.all %}
+      <li>{{ it.quantity }} × {{ it.product.name }} — ${{ it.price_each }}</li>
+    {% endfor %}
+  </ul>
+  <p>Delivered to: {{ order.address.line1 }}, {{ order.address.city }}, {{ order.address.state }} {{ order.address.zip }}</p>
+  <p><a href="{% url 'home' %}">Continue shopping</a></p>
+</body>
+</html>

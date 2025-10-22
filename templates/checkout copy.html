@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Checkout</title></head>
+<body>
+  <h1>Checkout</h1>
+  <p>Please enter a delivery address:</p>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Place order</button>
+  </form>
+
+  <p><a href="{% url 'cart' %}">← Back to cart</a></p>
+</body>
+</html>
