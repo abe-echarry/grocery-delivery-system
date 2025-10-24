@@ -46,7 +46,7 @@ This project helps bridge that gap by connecting customers with local markets th
 (Handles authentication, cart, orders, admin functions)
 ↓
 [ Database ]
-(SQLite or MySQL – stores users, products, and orders)
+(SQLite  – stores users, products, and orders)
 
 
 ---
