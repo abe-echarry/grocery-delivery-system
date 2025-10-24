@@ -25,7 +25,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from .models import Product
 
-# ---- helpers ---------------------------------------------------------------
+#helpers 
 def _get_cart(session) -> dict:
     """
     Return a mutable cart dict stored in the session.
@@ -37,7 +37,7 @@ def _get_cart(session) -> dict:
         session["cart"] = cart
     return cart
 
-# ---- actions ---------------------------------------------------------------
+#actions
 def cart_add(request, product_id):
     # add 1 to the item (create if missing)
     cart = _get_cart(request.session)
