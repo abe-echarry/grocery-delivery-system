@@ -34,7 +34,7 @@ This project helps bridge that gap by connecting customers with local markets th
 |------------|-------------|
 | Backend | Django 5.0 (Python 3.12) |
 | Frontend | HTML5, CSS3, Django Templates |
-| Database | SQLite (development) / MySQL (optional) |
+| Database | SQLite (development) |
 | Tools | Git, GitHub, Virtual Environment (.venv) |
 
 ##  System Architecture
