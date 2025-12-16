@@ -1,9 +1,31 @@
-from django.shortcuts import render
-from .models import Product
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Order, Product, SavedItem
+from django.db.models import Q
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.http import require_POST
+from django.db.models import Q
 
 def home(request):
-    products = Product.objects.filter(is_active=True).order_by("name")[:24]
-    return render(request, "home.html", {"products": products})
+    q = request.GET.get("q", "").strip()
+
+    products = Product.objects.filter(is_active=True)
+
+    if q:
+        products = products.filter(
+            Q(name__icontains=q) |
+            Q(category__name__icontains=q)
+        )
+
+    products = products.order_by("name")[:24]
+
+    return render(request, "home.html", {
+        "products": products,
+        "q": q,
+    })
+
 
 
 from django.contrib.auth.forms import UserCreationForm
@@ -86,12 +108,6 @@ from django.shortcuts import redirect, get_object_or_404
 from .forms import AddressForm
 from .models import Address, Order, OrderItem, Product
 
-def _get_cart(session) -> dict:
-    cart = session.get("cart")
-    if cart is None:
-        cart = {}
-        session["cart"] = cart
-    return cart
 
 def checkout(request):
     """Create/choose address, compute totals, create Order + OrderItems, clear cart."""
@@ -142,6 +158,7 @@ def order_success(request, order_id):
 
 #view for order lists + detail
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
 from .models import Order
 
 @login_required
@@ -153,9 +170,101 @@ def order_history(request):
 @login_required
 def order_detail(request, order_id):
     """Show a single order with its items."""
-    order = Order.objects.get(id=order_id, user=request.user)
-    items = order.items.select_related("product")
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    items_qs = order.items.select_related("product")
+    items = []
+    for it in items_qs:
+        items.append({
+            "product": it.product,
+            "quantity": it.quantity,
+            "price_each": it.price_each,
+            "line_total": it.price_each * it.quantity,
+        })
+
     return render(request, "orders/detail.html", {"order": order, "items": items})
 
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+
+@login_required
+def reorder(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    cart = _get_cart(request.session)
+    added = 0
+    skipped = 0
+
+    for oi in order.items.select_related("product"):
+        p = oi.product
+
+        if not p.is_active:
+            skipped += 1
+            continue
+
+        pid = str(p.id)
+        cart[pid] = cart.get(pid, 0) + int(oi.quantity)
+        added += 1
+
+    request.session.modified = True
+    return HttpResponseRedirect(reverse("cart"))
+
+
+@login_required
+def saved_list(request):
+    saved = SavedItem.objects.filter(user=request.user).select_related("product").order_by("-created_at")
+    return render(request, "saved/list.html", {"saved": saved})
+
+@login_required
+def saved_add(request, product_id):
+    product = get_object_or_404(Product, id=product_id, is_active=True)
+    SavedItem.objects.get_or_create(user=request.user, product=product)
+    return redirect("saved_list")
+
+@login_required
+def saved_remove(request, product_id):
+    SavedItem.objects.filter(user=request.user, product_id=product_id).delete()
+    return redirect("saved_list")
+
+
+@staff_member_required
+def courier_dashboard(request):
+    available_orders = Order.objects.filter(status="PLACED", courier__isnull=True).order_by("created_at")
+    my_orders = Order.objects.filter(courier=request.user).exclude(status="DELIVERED").order_by("created_at")
+
+    return render(request, "courier/dashboard.html", {
+        "available_orders": available_orders,
+        "my_orders": my_orders,
+    })
+
+
+@staff_member_required
+@require_POST
+def courier_claim(request, order_id):
+    order = get_object_or_404(Order, id=order_id, status="PLACED", courier__isnull=True)
+    order.courier = request.user
+    order.status = "ASSIGNED"
+    order.save()
+    return redirect("courier_dashboard")
+
+
+@staff_member_required
+@require_POST
+def courier_mark_out(request, order_id):
+    order = get_object_or_404(Order, id=order_id, courier=request.user)
+    if order.status == "ASSIGNED":
+        order.status = "OUT"
+        order.save()
+    return redirect("courier_dashboard")
+
+
+@staff_member_required
+@require_POST
+def courier_mark_delivered(request, order_id):
+    order = get_object_or_404(Order, id=order_id, courier=request.user)
+    if order.status in ("ASSIGNED", "OUT"):
+        order.status = "DELIVERED"
+        order.save()
+    return redirect("courier_dashboard")
 
 

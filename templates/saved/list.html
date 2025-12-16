@@ -1,0 +1,16 @@
+<h1>Saved Items</h1>
+<p><a href="{% url 'home' %}">← Back to store</a></p>
+
+{% if saved %}
+  <ul>
+    {% for s in saved %}
+      <li>
+        {{ s.product.name }} — ${{ s.product.price }}
+        <a href="{% url 'cart_add' s.product.id %}">Add to cart</a>
+        <a href="{% url 'saved_remove' s.product.id %}">Remove</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No saved items yet.</p>
+{% endif %}

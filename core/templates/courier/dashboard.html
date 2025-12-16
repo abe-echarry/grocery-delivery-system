@@ -1,0 +1,46 @@
+<h1>Courier Dashboard</h1>
+<p><a href="{% url 'home' %}">← Back to store</a></p>
+
+<h2>Available Orders</h2>
+{% if available_orders %}
+  <ul>
+    {% for o in available_orders %}
+      <li>
+        Order #{{ o.id }} — {{ o.created_at|date:"M d, Y g:i A" }} — ${{ o.total|floatformat:2 }}
+        <form method="post" action="{% url 'courier_claim' o.id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit">Claim</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No available orders.</p>
+{% endif %}
+
+<h2>My Active Orders</h2>
+{% if my_orders %}
+  <ul>
+    {% for o in my_orders %}
+      <li>
+        Order #{{ o.id }} — Status: {{ o.get_status_display }} — ${{ o.total|floatformat:2 }}
+
+        {% if o.status == "ASSIGNED" %}
+          <form method="post" action="{% url 'courier_mark_out' o.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">Mark Out for Delivery</button>
+          </form>
+        {% endif %}
+
+        {% if o.status == "ASSIGNED" or o.status == "OUT" %}
+          <form method="post" action="{% url 'courier_mark_delivered' o.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">Mark Delivered</button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No active orders assigned to you.</p>
+{% endif %}
